@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
-const { fetchSatelliteImage } = require('./services/sentinel');
+// CHANGE 1: Import the new controller instead of the service
+const { analyzeForest } = require('./controllers/auditController'); 
 require('dotenv').config();
 
 const app = express();
@@ -11,17 +12,9 @@ app.get('/test', (req, res) => {
   res.json({ status: 'Online', message: 'Eco-Oracle Engine Room Active' });
 });
 
-app.post('/api/analyze', async (req, res) => {
-  const { lat, lng } = req.body;
-  if (!lat || !lng) return res.status(400).json({ error: "Missing coordinates" });
-
-  try {
-    const path = await fetchSatelliteImage(lat, lng);
-    res.json({ success: true, message: "Satellite image captured", filePath: path });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+// CHANGE 2: Use the controller function to handle the route
+// The controller now handles fetching the image AND running the Python script
+app.post('/api/analyze', analyzeForest);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Listening on port ${PORT}`));

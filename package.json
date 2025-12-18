@@ -32,5 +32,19 @@
     "eslint-config-next": "16.0.10",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
+  },
+  "description": "This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sambit-Kumar-Mohanty-26/eco-oracle.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Sambit-Kumar-Mohanty-26/eco-oracle/issues"
+  },
+  "homepage": "https://github.com/Sambit-Kumar-Mohanty-26/eco-oracle#readme"
 }
