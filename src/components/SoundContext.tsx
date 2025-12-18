@@ -14,8 +14,6 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   const toggleSound = () => {
     const newState = !isEnabled;
     setIsEnabled(newState);
-    
-    // Immediate Feedback Sound
     if (newState) {
        const audio = new Audio("/sounds/swoosh.wav");
        audio.volume = 0.2;

@@ -2,7 +2,6 @@
 import { motion } from "framer-motion";
 import { Ghost, Flame, Lock, AlertOctagon, Activity } from "lucide-react";
 
-// HUD Card Component
 const AlertCard = ({ 
   icon: Icon, title, desc, delay, color 
 }: { 
@@ -13,10 +12,8 @@ const AlertCard = ({
     whileInView={{ opacity: 1, x: 0 }}
     viewport={{ once: true, margin: "-100px" }}
     transition={{ duration: 0.6, delay: delay, type: "spring", stiffness: 50 }}
-    // REMOVED "mb-6" here to let the parent container control the spacing via 'gap'
     className="relative pl-6 py-4 pr-4 border-l-2 border-white/10 bg-linear-to-r from-black/80 to-transparent hover:border-red-500/50 transition-colors group"
   >
-    {/* Decorative Blip on Left Border */}
     <div className={`absolute top-0 -left-0.5 h-0 w-0.5 ${color} group-hover:h-full transition-all duration-500 ease-out`} />
 
     <div className="flex items-center gap-4 mb-2">
@@ -37,14 +34,7 @@ const AlertCard = ({
 export default function Problem() {
   return (
     <section className="min-h-screen flex items-center px-8 md:px-20 relative z-20 overflow-hidden">
-      
-      {/* LAYOUT STRATEGY:
-        The 'ml-auto' pushes the content box to the right side.
-        'md:w-1/2' restricts width to 50%, leaving the left open for the Earth.
-      */}
       <div className="w-full md:w-[50%] ml-auto flex flex-col justify-center">
-        
-        {/* Header Section - Reduced mb-12 to mb-8 */}
         <div className="mb-8 border-b border-red-900/30 pb-4 relative">
              <motion.div 
                 initial={{ opacity: 0 }}
@@ -65,14 +55,10 @@ export default function Problem() {
                  ERRORS
                </span>
              </motion.h2>
-
-             {/* Background decorative number */}
              <div className="absolute right-0 top-0 opacity-10 pointer-events-none">
                  <h2 className="text-9xl font-bold text-red-500 font-heading">3</h2>
              </div>
         </div>
-
-        {/* The List of Problems - Changed to gap-4 for consistent tight spacing */}
         <div className="flex flex-col gap-4">
             <AlertCard 
                 icon={Ghost} 
@@ -97,7 +83,6 @@ export default function Problem() {
             />
         </div>
 
-        {/* Financial Impact Footer - Reduced mt-8 to mt-6 */}
         <motion.div 
             initial={{ opacity: 0 }} 
             whileInView={{ opacity: 1 }}

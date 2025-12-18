@@ -21,7 +21,6 @@ export default function Earth() {
 
   return (
     <group ref={earthRef} rotation={[0, 0, 0.4]}> 
-      {/* 1. EARTH SURFACE */}
       <mesh>
         <sphereGeometry args={[1, 64, 64]} />
         <meshStandardMaterial
@@ -34,7 +33,6 @@ export default function Earth() {
         />
       </mesh>
 
-      {/* 2. CLOUDS */}
       <mesh ref={cloudsRef} scale={[1.01, 1.01, 1.01]}>
         <sphereGeometry args={[1, 64, 64]} />
         <meshStandardMaterial
@@ -47,15 +45,14 @@ export default function Earth() {
         />
       </mesh>
 
-      {/* 3. ATMOSPHERE (The Blue Halo) */}
       <mesh scale={[1.2, 1.2, 1.2]}>
         <sphereGeometry args={[1, 64, 64]} />
         <meshBasicMaterial
-          color="#00aaff" // Cyan Blue
+          color="#00aaff"
           transparent
           opacity={0.15}
           blending={THREE.AdditiveBlending}
-          side={THREE.BackSide} // Shows only on edges
+          side={THREE.BackSide}
         />
       </mesh>
     </group>

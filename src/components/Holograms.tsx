@@ -9,7 +9,6 @@ export function VerifiedHologram() {
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
     ref.current.rotation.y = t * 0.5;
-    // Smooth breathing effect
     ref.current.scale.setScalar(1 + Math.sin(t * 2) * 0.05);
   });
 
@@ -32,24 +31,19 @@ export function GlitchedHologram() {
   
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
-    // JITTER EFFECT (Bad Actor)
     if (Math.random() > 0.9) {
-        // Random scale jump
         ref.current.scale.setScalar(1 + Math.random() * 0.3);
-        // Random color flash (White/Red)
         (ref.current.material as any).color?.setHex(Math.random() > 0.5 ? 0xffffff : 0xff0000); 
     } else {
         ref.current.scale.setScalar(1);
         (ref.current.material as any).color?.setHex(0xff0000); 
     }
     
-    // Jerky rotation
     ref.current.rotation.y += Math.random() * 0.2;
   });
 
   return (
     <mesh ref={ref}>
-      {/* Spiky Geometry using Icosahedron with 0 detail */}
       <icosahedronGeometry args={[1, 0]} /> 
       <meshBasicMaterial color="#ff0000" wireframe wireframeLinewidth={2} />
     </mesh>

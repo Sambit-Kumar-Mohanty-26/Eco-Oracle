@@ -5,8 +5,7 @@ import { TextReveal } from "../ui/TextReveal";
 export default function Hero() {
   return (
     <section className="h-screen flex flex-col justify-center px-8 md:px-20 max-w-7xl mx-auto relative z-10 pointer-events-none">
-      
-      {/* Small Header */}
+
       <div className="flex items-center gap-3 mb-6">
         <motion.div 
           initial={{ width: 0 }}
@@ -23,14 +22,12 @@ export default function Hero() {
           SATELLITE AUDIT NETWORK
         </motion.div>
       </div>
-      
-      {/* Big Title */}
+
       <div className="relative">
         <h1 className="text-7xl md:text-[10rem] font-bold text-white leading-[0.85] font-heading tracking-tight">
             <TextReveal delay={0.2}>ECO</TextReveal>
         </h1>
-        
-        {/* FIXED: Removed TextReveal for ORACLE to fix gradient bug */}
+
         <h1 className="text-7xl md:text-[10rem] font-bold leading-[0.85] font-heading tracking-tight pb-4">
             <motion.span 
               initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
@@ -43,7 +40,6 @@ export default function Hero() {
         </h1>
       </div>
       
-      {/* Description Card */}
       <motion.div 
          initial={{ opacity: 0, x: -20 }} 
          whileInView={{ opacity: 1, x: 0 }} 

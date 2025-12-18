@@ -18,25 +18,17 @@ export default function Hud() {
 
   return (
     <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-50">
-      
-      {/* Top Left Coords */}
       <div className="absolute top-6 left-6 border-l border-t border-emerald-500/30 p-2 text-emerald-500/50 font-mono text-xs">
         <p>LAT: {coords.lat}</p>
         <p>LNG: {coords.lng}</p>
       </div>
 
-      {/* Top Right Status */}
       <div className="absolute top-6 right-6 text-right text-emerald-500/50 font-mono text-xs">
         <p className="flex items-center justify-end gap-2">
           SAT_LINK: CONNECTED <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
         </p>
       </div>
 
-      {/* 
-          AUDIO BUTTON 
-          - pointer-events-auto: Makes it clickable
-          - fixed bottom-10 right-10: Locks it to screen corner
-      */}
       <div className="fixed bottom-10 right-10 pointer-events-auto">
          <button 
             onClick={toggleSound}
@@ -55,8 +47,6 @@ export default function Hud() {
             )}
          </button>
       </div>
-
-      {/* Bottom Left Version */}
       <div className="absolute bottom-6 left-6 text-emerald-500/50 font-mono text-xs">
         <p>ECO-ORACLE // v1.0</p>
       </div>

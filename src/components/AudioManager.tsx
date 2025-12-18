@@ -2,10 +2,10 @@
 import { useEffect, useRef } from "react";
 import { useScroll } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useSound } from "./SoundContext"; // Import the controller
+import { useSound } from "./SoundContext"; 
 
 export default function AudioManager() {
-  const { isEnabled } = useSound(); // Only play if this is TRUE
+  const { isEnabled } = useSound(); 
   const scroll = useScroll();
   const swooshRef = useRef<HTMLAudioElement | null>(null);
   const lastSection = useRef(0);
@@ -16,7 +16,6 @@ export default function AudioManager() {
   }, []);
 
   useFrame(() => {
-    // If Sound is OFF, do nothing
     if (!isEnabled) return;
 
     const offset = scroll.offset;

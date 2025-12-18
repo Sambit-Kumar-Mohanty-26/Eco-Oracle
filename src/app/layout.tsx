@@ -3,10 +3,9 @@ import { Rajdhani, JetBrains_Mono } from "next/font/google"; // Changed Font
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
-// Sci-Fi Header Font
 const fontHeading = Rajdhani({
   subsets: ["latin"],
-  weight: ["500", "600", "700"], // Load multiple weights
+  weight: ["500", "600", "700"],
   variable: "--font-heading",
 });
 
