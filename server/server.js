@@ -1,27 +1,27 @@
-// server/server.js
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const axios = require('axios');
+const { fetchSatelliteImage } = require('./services/sentinel');
+require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Routes
-// Task: Create a 'GET /test' route to confirm it's running.
 app.get('/test', (req, res) => {
-    res.json({ 
-        status: 'Online', 
-        message: 'Eco-Oracle Backend is operational.', 
-        timestamp: new Date().toISOString() 
-    });
+  res.json({ status: 'Online', message: 'Eco-Oracle Engine Room Active' });
 });
 
-// Start the Server
-app.listen(PORT, () => {
-    console.log(`> Eco-Oracle Engine Room running on http://localhost:${PORT}`);
+app.post('/api/analyze', async (req, res) => {
+  const { lat, lng } = req.body;
+  if (!lat || !lng) return res.status(400).json({ error: "Missing coordinates" });
+
+  try {
+    const path = await fetchSatelliteImage(lat, lng);
+    res.json({ success: true, message: "Satellite image captured", filePath: path });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
