@@ -1,72 +1,86 @@
 const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 const { fetchSatelliteImage } = require('../services/sentinel');
+const { mintNFT } = require('../services/verbwire');
 
 const analyzeForest = async (req, res) => {
   const { lat, lng } = req.body;
-
   if (!lat || !lng) {
     return res.status(400).json({ error: "Missing coordinates (lat, lng)" });
   }
 
   try {
-    // 1. Fetch the Satellite Image
-    console.log("1. Fetching Satellite Image...");
+    console.log(`📡 1. Fetching Satellite Image for [${lat}, ${lng}]...`);
     const imagePath = await fetchSatelliteImage(lat, lng);
-
-    // 2. Spawn Python process to analyze it
-    console.log("2. Analyzing Biomass with Python...");
+    console.log("   ✅ Image saved to:", imagePath);
+    console.log("🧠 2. Analyzing Biomass with Python...");
     const pythonScript = path.join(__dirname, '../scripts/analyze.py');
+    let pythonCommand;
+    if (process.env.NODE_ENV === 'production') {
+        pythonCommand = 'python3'; 
+    } else {
+        pythonCommand = path.join(__dirname, '../scripts/venv/Scripts/python.exe');
+    }
     
-    // ✅ FIX: Point directly to the python executable inside your venv
-    // This ensures Node uses the environment where you installed opencv and numpy
-    const pythonCommand = process.platform === "win32" 
-      ? path.join(__dirname, '../scripts/venv/Scripts/python.exe') 
-      : path.join(__dirname, '../scripts/venv/bin/python');
-    
-    console.log(`Using Python from: ${pythonCommand}`);
-
+    console.log(`   👉 Using Python Interpreter: ${pythonCommand}`);
     const pythonProcess = spawn(pythonCommand, [pythonScript, imagePath]);
 
     let dataString = '';
-
-    // 3. Listen for data from Python
+    let errorString = '';
     pythonProcess.stdout.on('data', (data) => {
       dataString += data.toString();
     });
-
     pythonProcess.stderr.on('data', (data) => {
-      console.error(`Python Error: ${data}`);
+      errorString += data.toString();
     });
-
-    pythonProcess.on('close', (code) => {
+    pythonProcess.on('close', async (code) => {
       try {
-        if (!dataString) {
-          throw new Error("Python script returned no data.");
+        if (code !== 0) {
+            console.error("❌ Python Script Error:", errorString);
+            throw new Error(`Python script exited with code ${code}`);
         }
-        
-        // Parse the JSON output from Python
+
+        if (!dataString) {
+            throw new Error("Python script returned no data.");
+        }
+
         const result = JSON.parse(dataString);
-        console.log("3. Analysis Complete:", result);
-        
-        // Return the final result to the frontend
+        console.log("📊 3. AI Analysis Complete:", result);
+        let mintResult = null;
+        if (result.status === "VERIFIED") {
+            console.log("🌲 Forest Verified. Initiating Blockchain Mint...");
+
+            mintResult = await mintNFT(imagePath, result.biomass_score, lat, lng);
+            
+            if(mintResult) {
+                console.log("   🔗 Minting Queued/Sent via Verbwire.");
+            } else {
+                console.log("   ⚠️ Minting attempted but failed (check logs).");
+            }
+        } else {
+            console.log("⚠️ Biomass too low (Phantom Forest). Minting Skipped.");
+        }
+
         res.json({
           success: true,
           imagePath: imagePath,
-          data: result
+          ai_data: result,      
+          blockchain_data: mintResult
         });
+
       } catch (e) {
-        console.error("Parse Error:", e);
+        console.error("Pipeline Logic Error:", e);
         res.status(500).json({ 
-          error: "Failed to parse Python output", 
+          error: "Pipeline Processing Failed", 
           details: e.message,
-          raw: dataString 
+          python_error: errorString
         });
       }
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("Server Error:", error);
     res.status(500).json({ error: error.message });
   }
 };
