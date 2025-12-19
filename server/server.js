@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { analyzeForest } = require('./controllers/auditController'); 
 const { predictDisaster } = require('./controllers/guardianController');
 require('dotenv').config();
@@ -7,6 +8,7 @@ require('dotenv').config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use('/temp', express.static(path.join(__dirname, 'temp')));
 app.get('/test', (req, res) => res.json({ status: 'Online' }));
 app.post('/api/analyze', analyzeForest);
 app.post('/api/predict', predictDisaster);
