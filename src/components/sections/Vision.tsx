@@ -9,7 +9,7 @@ export default function Vision() {
          <TextReveal delay={0.2}>ECO-ORACLE</TextReveal>
       </h1>
       
-      <Link href="/dashboard">
+      <Link href="/dashboard/audit">
         <button className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg transition-all shadow-[0_0_20px_rgba(16,185,129,0.5)]">
            LAUNCH DASHBOARD
         </button>

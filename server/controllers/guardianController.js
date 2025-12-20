@@ -65,9 +65,7 @@ const predictDisaster = async (req, res) => {
                         console.log("   ✅ NFT Metadata Updated.");
                         nftUpdated = true;
                     } else {
-                        console.log("   ⚠️ Update failed (API Indexing Lag).");
-                        console.log("   🚀 FALLBACK: Minting new 'EMERGENCY ALERT' NFT...");
-                        
+                        console.log("   ⚠️ Update failed (API Indexing). Minting Fallback...");
                         await mintNFT(imagePath, "CRITICAL FIRE RISK", lat, lng);
                         console.log("   ✅ Emergency Blockchain Record Created.");
                         nftUpdated = true;
@@ -77,7 +75,11 @@ const predictDisaster = async (req, res) => {
 
             res.json({ 
                 success: true, 
-                risk_data: { ...weather, ...moistureData, riskLevel }, 
+                risk_data: { 
+                    weather: weather,
+                    dryness: moistureData.dryness_score,
+                    level: riskLevel 
+                }, 
                 actions: { sms_sent: alertSent, nft_updated: nftUpdated }
             });
 

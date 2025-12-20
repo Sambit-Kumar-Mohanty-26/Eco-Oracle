@@ -3,7 +3,6 @@ import dynamic from 'next/dynamic';
 import { ScrollControls } from "@react-three/drei";
 import Overlay from "@/components/Overlay";
 import Hud from "@/components/Hud"; 
-import ControlPanel from "@/components/ControlPanel";
 import { SoundProvider } from "@/components/SoundContext";
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import { Suspense } from "react";
@@ -30,10 +29,6 @@ export default function Home() {
     <SoundProvider>
       <main className="relative h-screen w-full bg-black overflow-hidden">
         <Hud />
-        <div className="absolute top-24 right-8 z-50 pointer-events-auto">
-            <ControlPanel />
-        </div>
-
         <Suspense fallback={<Loader />}>
           <Canvas 
             shadows

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Rajdhani, JetBrains_Mono } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs"; 
+import { dark } from "@clerk/themes"; 
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
@@ -26,14 +28,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className={cn(
-        "bg-black text-white antialiased", 
-        fontHeading.variable, 
-        fontBody.variable
-      )}>
-        {children}
-      </body>
-    </html>
+    <ClerkProvider
+      appearance={{
+        baseTheme: dark,
+        variables: { colorPrimary: "#10b981" },
+      }}
+    >
+      <html lang="en" className="dark">
+        <body className={cn(
+          "bg-black text-white antialiased", 
+          fontHeading.variable, 
+          fontBody.variable
+        )}>
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
