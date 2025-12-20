@@ -29,6 +29,37 @@ app.get('/api/audits', async (req, res) => {
         res.status(500).json({ error: "Database error" });
     }
 });
+app.get('/api/stats', async (req, res) => {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ error: "UserID required" });
 
+    try {
+        const totalAudits = await Audit.countDocuments({ userId });
+        const activeAlerts = await Audit.countDocuments({ userId, status: "CRITICAL" });
+        const totalArea = totalAudits * 50;
+
+        res.json({
+            total_credits: totalAudits,
+            total_area: totalArea,
+            active_alerts: activeAlerts
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Stats failed" });
+    }
+});
+app.get('/api/activity', async (req, res) => {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ error: "UserID required" });
+
+    try {
+        const recentAudits = await Audit.find({ userId })
+            .sort({ timestamp: -1 })
+            .limit(10);
+            
+        res.json(recentAudits);
+    } catch (error) {
+        res.status(500).json({ error: "Activity failed" });
+    }
+});
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
