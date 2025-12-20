@@ -1,7 +1,7 @@
 const axios = require('axios');
 require('dotenv').config();
 
-const CONTRACT_ADDRESS = "0x0D29A715d3a1E0763EB039D84ec8782b75C63F3e";
+const CONTRACT_ADDRESS = "0x801aE7Bd20C9FfE44aca3ed7967A58A37735a4cC";
 const TOKEN_ID = "3";
 
 async function checkToken() {
