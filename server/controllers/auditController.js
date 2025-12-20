@@ -3,72 +3,66 @@ const path = require('path');
 const fs = require('fs');
 const { fetchSatelliteImage } = require('../services/sentinel');
 const { mintNFT } = require('../services/verbwire');
+const Audit = require('../models/Audit');
 
 const analyzeForest = async (req, res) => {
-  const { lat, lng } = req.body;
+  const { lat, lng, userId } = req.body; 
 
-  if (!lat || !lng) {
-    return res.status(400).json({ error: "Missing coordinates (lat, lng)" });
+  if (!lat || !lng || !userId) {
+    return res.status(400).json({ error: "Missing data (lat, lng, or userId)" });
   }
 
   try {
-    console.log(`📡 1. Fetching Satellite Image for [${lat}, ${lng}]...`);
-    const imagePath = await fetchSatelliteImage(lat, lng);
-
-    console.log("🧠 2. Analyzing Biomass with Python...");
+    console.log(`📡 Fetching for User: ${userId} at [${lat}, ${lng}]...`);
+    const tempPath = await fetchSatelliteImage(lat, lng);
     const pythonScript = path.join(__dirname, '../scripts/analyze.py');
+    let pythonCommand = process.env.NODE_ENV === 'production' ? 'python3' : path.join(__dirname, '../scripts/venv/Scripts/python.exe');
     
-    let pythonCommand;
-    if (process.env.NODE_ENV === 'production') {
-        pythonCommand = 'python3'; 
-    } else {
-        pythonCommand = path.join(__dirname, '../scripts/venv/Scripts/python.exe');
-    }
-
-    const pythonProcess = spawn(pythonCommand, [pythonScript, imagePath]);
-
+    const pythonProcess = spawn(pythonCommand, [pythonScript, tempPath]);
     let dataString = '';
-    let errorString = '';
 
     pythonProcess.stdout.on('data', (data) => dataString += data.toString());
-    pythonProcess.stderr.on('data', (data) => errorString += data.toString());
 
     pythonProcess.on('close', async (code) => {
       try {
-        if (!dataString) throw new Error("Python script returned no data.");
-        
         const result = JSON.parse(dataString);
-        console.log("📊 3. AI Analysis Complete:", result);
-
+        console.log("📊 Score:", result.biomass_score);
+        
         let mintResult = null;
+        let uniqueImageName = `audit_${Date.now()}.png`;
 
         if (result.status === "VERIFIED") {
-            console.log("🌲 Forest Verified. Initiating Custom Contract Mint...");
-
-            mintResult = await mintNFT(imagePath, result.biomass_score, lat, lng);
-            
-            if(mintResult) {
-                console.log(`   🔗 Minted Token ID: ${mintResult.transaction_details.tokenID}`);
-            }
-        } else {
-            console.log("⚠️ Biomass low. Minting Skipped.");
-        }
+            console.log("🌲 Minting...");
+            mintResult = await mintNFT(tempPath, result.biomass_score, lat, lng);
+            const uniquePath = path.join(__dirname, '../temp', uniqueImageName);
+            fs.copyFileSync(tempPath, uniquePath);
+            const newAudit = new Audit({
+                userId: userId,
+                lat: lat,
+                lng: lng,
+                biomassScore: result.biomass_score,
+                imageName: uniqueImageName,
+                contractAddress: mintResult?.transaction_details?.contractAddress || "N/A",
+                tokenId: mintResult?.transaction_details?.tokenID || "PENDING",
+                status: "VERIFIED"
+            });
+            await newAudit.save();
+            console.log("💾 Saved to Asset Vault (MongoDB)");
+        } 
 
         res.json({
           success: true,
-          imagePath: imagePath,
           ai_data: result,
           blockchain_data: mintResult
         });
 
       } catch (e) {
-        console.error("Pipeline Logic Error:", e);
-        res.status(500).json({ error: "Pipeline Failed", details: e.message });
+        console.error(e);
+        res.status(500).json({ error: "Pipeline Failed" });
       }
     });
 
   } catch (error) {
-    console.error("Server Error:", error);
     res.status(500).json({ error: error.message });
   }
 };

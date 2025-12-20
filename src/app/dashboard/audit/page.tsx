@@ -2,10 +2,10 @@
 
 import dynamic from "next/dynamic";
 import { useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Satellite, Activity, Flame, Trees, Wind, Thermometer } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
+import { Satellite, Activity, Flame, Trees, Wind, Thermometer } from "lucide-react";
 import ResultModal from "@/components/ResultModal";
-import { runAudit, runGuardian } from "@/lib/api";
+import { runAudit, runGuardian } from "@/lib/api"; 
 
 const MapWithNoSSR = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -17,10 +17,10 @@ const MapWithNoSSR = dynamic(() => import("@/components/Map"), {
 });
 
 export default function AuditPage() {
+  const { userId, isLoaded } = useAuth(); 
   const [coords, setCoords] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<any>(null);
-
   const [mode, setMode] = useState<'AUDIT' | 'GUARDIAN'>('AUDIT');
 
   const handleAreaSelect = (selected: { lat: number; lng: number }) => {
@@ -29,33 +29,35 @@ export default function AuditPage() {
   };
 
   const executeCommand = async () => {
-    if (!coords.lat || !coords.lng) return;
+    if (!coords.lat || !coords.lng || !userId) {
+        if(!userId) alert("User authentication missing.");
+        return;
+    }
+
     setIsAnalyzing(true);
     setResult(null);
 
     try {
       let data;
       if (mode === 'AUDIT') {
-        data = await runAudit(coords.lat, coords.lng);
+        data = await runAudit(coords.lat, coords.lng, userId);
       } else {
         data = await runGuardian(coords.lat, coords.lng);
       }
       setResult({ ...data, mode: mode }); 
     } catch (error) {
+      console.error(error);
       alert("Satellite Connection Failed. Check Backend.");
     } finally {
       setIsAnalyzing(false);
     }
   };
 
-  const themeColor = mode === 'AUDIT' ? 'emerald' : 'orange';
-  const themeText = mode === 'AUDIT' ? 'text-emerald-500' : 'text-orange-500';
   const themeBorder = mode === 'AUDIT' ? 'border-emerald-500' : 'border-orange-500';
   const themeBg = mode === 'AUDIT' ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-orange-600 hover:bg-orange-500';
 
   return (
     <main className="relative h-full w-full bg-black overflow-hidden font-sans text-white">
-
       <div className="absolute inset-0 z-0">
         <MapWithNoSSR onAreaSelect={handleAreaSelect} />
       </div>
@@ -114,9 +116,11 @@ export default function AuditPage() {
 
         <button
           onClick={executeCommand}
-          disabled={!coords.lat || isAnalyzing}
+          disabled={!coords.lat || isAnalyzing || !isLoaded}
           className={`w-full py-4 text-sm font-bold tracking-[0.2em] uppercase transition-all rounded-lg shadow-md text-white
-            ${!coords.lat || isAnalyzing ? 'bg-gray-400 cursor-not-allowed' : themeBg}
+            ${!coords.lat || isAnalyzing 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : themeBg}
           `}
         >
           {isAnalyzing ? (

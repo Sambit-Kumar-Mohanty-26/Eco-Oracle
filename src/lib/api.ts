@@ -1,10 +1,10 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
-export const runAudit = async (lat: number, lng: number) => {
+export const runAudit = async (lat: number, lng: number, userId: string) => {
   const res = await fetch(`${API_URL}/analyze`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ lat, lng }),
+    body: JSON.stringify({ lat, lng, userId }),
   });
   return res.json();
 };
