@@ -60,7 +60,7 @@ export default function AssetVault() {
                         </p>
                         
                         <a 
-                            href={`https://sepolia.etherscan.io/tx/${asset.contractAddress}`}
+                            href={`https://sepolia.etherscan.io/address/${asset.contractAddress}`}
                             target="_blank"
                             className="flex items-center gap-2 text-xs text-blue-400 hover:text-white transition-colors"
                         >
