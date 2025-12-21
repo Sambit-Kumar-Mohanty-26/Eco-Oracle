@@ -3,22 +3,20 @@
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { Satellite, Activity, Flame, Trees, Wind, Thermometer } from "lucide-react";
+import { Satellite, Activity, Flame, Trees, Wind, Thermometer, Bot, ScanFace } from "lucide-react";
 import ResultModal from "@/components/ResultModal";
 import { runAudit, runGuardian } from "@/lib/api"; 
 import toast from "react-hot-toast";
 
 const MapWithNoSSR = dynamic(() => import("@/components/Map"), {
   ssr: false,
-  loading: () => (
-    <div className="flex h-screen w-full items-center justify-center bg-zinc-900 text-emerald-500 font-mono animate-pulse">
-      INITIALIZING ORBITAL UPLINK...
-    </div>
-  ),
+  loading: () => <div className="h-full w-full bg-black/90" />
 });
 
 export default function AuditPage() {
   const { userId, isLoaded } = useAuth(); 
+  const [inputLat, setInputLat] = useState("");
+  const [inputLng, setInputLng] = useState("");
   const [coords, setCoords] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -26,8 +24,9 @@ export default function AuditPage() {
 
   const handleAreaSelect = (selected: { lat: number; lng: number }) => {
     setCoords(selected);
+    setInputLat(selected.lat.toFixed(4));
+    setInputLng(selected.lng.toFixed(4));  
     setResult(null);
-
     toast.dismiss();
     toast.success("Coordinates Locked", { 
         icon: '📍', 
@@ -35,22 +34,33 @@ export default function AuditPage() {
         duration: 2000
     });
   };
+  const handleManualInput = (type: 'lat' | 'lng', value: string) => {
+    if (type === 'lat') setInputLat(value);
+    if (type === 'lng') setInputLng(value);
+
+    const l = parseFloat(type === 'lat' ? value : inputLat);
+    const g = parseFloat(type === 'lng' ? value : inputLng);
+
+    if (!isNaN(l) && !isNaN(g)) {
+        setCoords({ lat: l, lng: g });
+    }
+  };
 
   const executeCommand = async () => {
     if (!coords.lat || !coords.lng) {
-        toast.error("Please draw an area on the map first.");
+        toast.error("Enter coordinates or draw on map.");
         return;
     }
     
     if (!userId) {
-        if(!userId) toast.error("User authentication missing. Please login.");
+        if(!userId) toast.error("Authentication Error.");
         return;
     }
 
     setIsAnalyzing(true);
     setResult(null);
     const toastId = toast.loading(
-        mode === 'AUDIT' ? "Initializing Satellite Audit..." : "Analyzing Atmospheric Data...", 
+        mode === 'AUDIT' ? "Initializing AI Audit..." : "Analyzing Atmospheric Data...", 
         { style: { background: '#000', color: '#fff', border: '1px solid #333' } }
     );
 
@@ -60,17 +70,17 @@ export default function AuditPage() {
         data = await runAudit(coords.lat, coords.lng, userId);
       } else {
         data = await runGuardian(coords.lat, coords.lng);
-      }
+      }     
       setResult({ ...data, mode: mode }); 
       if (data.success) {
-          toast.success("Command Executed Successfully", { id: toastId });
+          toast.success("Analysis Complete", { id: toastId });
       } else {
           toast.error("Analysis Failed", { id: toastId });
       }
 
     } catch (error) {
       console.error(error);
-      toast.error("Satellite Connection Failed. Check Backend.", { id: toastId });
+      toast.error("Connection Failed.", { id: toastId });
     } finally {
       setIsAnalyzing(false);
     }
@@ -78,11 +88,12 @@ export default function AuditPage() {
 
   const themeBorder = mode === 'AUDIT' ? 'border-emerald-500' : 'border-orange-500';
   const themeBg = mode === 'AUDIT' ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-orange-600 hover:bg-orange-500';
+  const themeLightBg = mode === 'AUDIT' ? 'bg-emerald-50' : 'bg-orange-50';
 
   return (
     <main className="relative h-full w-full bg-black overflow-hidden font-sans text-white">
       <div className="absolute inset-0 z-0">
-        <MapWithNoSSR onAreaSelect={handleAreaSelect} />
+        <MapWithNoSSR onAreaSelect={handleAreaSelect} targetCoords={coords} />
       </div>
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 flex bg-black/80 backdrop-blur-md rounded-full p-1 border border-white/10 shadow-xl">
         <button 
@@ -99,15 +110,15 @@ export default function AuditPage() {
         </button>
       </div>
 
-      <div className={`absolute top-24 left-8 z-10 w-96 bg-white/90 backdrop-blur-md border-l-4 ${themeBorder} rounded-r-xl shadow-2xl p-6 text-gray-800 font-mono transition-all duration-300`}>
+      <div className={`absolute top-24 left-8 z-10 w-96 bg-white/95 backdrop-blur-xl border-l-4 ${themeBorder} rounded-r-xl shadow-2xl p-6 text-gray-800 font-mono transition-all duration-300`}>
         
         <div className="flex items-center gap-3 border-b border-gray-300 pb-4 mb-6">
           <div className={`p-2 ${mode === 'AUDIT' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'} rounded-lg`}>
-            {mode === 'AUDIT' ? <Satellite size={20} /> : <Activity size={20} />}
+            {mode === 'AUDIT' ? <Bot size={24} /> : <Activity size={24} />}
           </div>
           <div>
             <h2 className="text-xl font-bold uppercase tracking-widest text-black">
-                {mode === 'AUDIT' ? 'Verification' : 'Fire Prediction'}
+                {mode === 'AUDIT' ? 'AI Verification' : 'Fire Prediction'}
             </h2>
             <div className={`text-[10px] font-bold ${mode === 'AUDIT' ? 'text-emerald-600' : 'text-orange-600'} uppercase`}>
                 Targeting System: Active
@@ -115,14 +126,26 @@ export default function AuditPage() {
           </div>
         </div>
 
-        <div className="space-y-3 mb-6">
-          <div className="bg-gray-100 p-3 rounded flex justify-between items-center">
-            <span className="text-xs text-gray-500 font-bold">LATITUDE</span>
-            <span className="font-bold tracking-widest">{coords.lat ? coords.lat.toFixed(4) : "---"}</span>
+        <div className="space-y-4 mb-6">
+          <div className={`${themeLightBg} p-3 rounded border border-gray-200`}>
+            <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Target Latitude</label>
+            <input 
+                type="number" 
+                placeholder="e.g. -3.46"
+                value={inputLat}
+                onChange={(e) => handleManualInput('lat', e.target.value)}
+                className="w-full bg-transparent font-bold text-lg text-gray-800 outline-none placeholder-gray-300"
+            />
           </div>
-          <div className="bg-gray-100 p-3 rounded flex justify-between items-center">
-            <span className="text-xs text-gray-500 font-bold">LONGITUDE</span>
-            <span className="font-bold tracking-widest">{coords.lng ? coords.lng.toFixed(4) : "---"}</span>
+          <div className={`${themeLightBg} p-3 rounded border border-gray-200`}>
+            <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Target Longitude</label>
+            <input 
+                type="number" 
+                placeholder="e.g. -62.21"
+                value={inputLng}
+                onChange={(e) => handleManualInput('lng', e.target.value)}
+                className="w-full bg-transparent font-bold text-lg text-gray-800 outline-none placeholder-gray-300"
+            />
           </div>
         </div>
 
@@ -150,19 +173,19 @@ export default function AuditPage() {
             <span className="flex items-center justify-center gap-2">
               <Activity className="animate-spin" size={16} /> PROCESSING...
             </span>
-          ) : mode === 'AUDIT' ? "START VERIFICATION" : "PREDICT FIRE RISK"}
+          ) : mode === 'AUDIT' ? "START AI AUDIT" : "PREDICT FIRE RISK"}
         </button>
 
         {!coords.lat && (
-            <div className="mt-4 text-[10px] text-center text-gray-400 uppercase tracking-wider animate-pulse">
-                ⚠ Draw Area on Map First
+            <div className="mt-4 text-[10px] text-center text-gray-400 uppercase tracking-wider">
+                Type coordinates OR Draw on Map
             </div>
         )}
-      </div>     
+      </div>
+
       {result && (
         <ResultModal data={result} onClose={() => setResult(null)} />
       )}
-
     </main>
   );
 }

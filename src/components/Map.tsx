@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { MapContainer, TileLayer, FeatureGroup } from "react-leaflet";
+import { useEffect, useRef } from "react";
+import { MapContainer, TileLayer, FeatureGroup, useMap, Rectangle } from "react-leaflet";
 import { EditControl } from "react-leaflet-draw";
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
@@ -19,9 +19,21 @@ const fixLeafletIcons = () => {
 
 interface MapProps {
   onAreaSelect: (coords: { lat: number; lng: number }) => void;
+  targetCoords: { lat: number | null; lng: number | null };
 }
+const MapController = ({ coords }: { coords: { lat: number | null; lng: number | null } }) => {
+  const map = useMap();
 
-const Map = ({ onAreaSelect }: MapProps) => {
+  useEffect(() => {
+    if (coords.lat && coords.lng) {
+      map.flyTo([coords.lat, coords.lng], 13, { duration: 1.5 });
+    }
+  }, [coords, map]);
+
+  return null;
+};
+
+const Map = ({ onAreaSelect, targetCoords }: MapProps) => {
   useEffect(() => {
     fixLeafletIcons();
   }, []);
@@ -31,10 +43,16 @@ const Map = ({ onAreaSelect }: MapProps) => {
     if (layerType === "rectangle" || layerType === "polygon") {
       const bounds = layer.getBounds();
       const center = bounds.getCenter();
-      console.log("📍 Center Selected:", center);
       onAreaSelect({ lat: center.lat, lng: center.lng });
     }
   };
+
+  const manualBox = targetCoords.lat && targetCoords.lng 
+    ? [
+        [targetCoords.lat - 0.01, targetCoords.lng - 0.01],
+        [targetCoords.lat + 0.01, targetCoords.lng + 0.01]
+      ] as L.LatLngBoundsExpression
+    : null;
 
   return (
     <div className="h-full w-full relative z-0">
@@ -42,12 +60,17 @@ const Map = ({ onAreaSelect }: MapProps) => {
         center={[-3.46, -62.21]} 
         zoom={12}
         style={{ height: "100%", width: "100%" }}
-        className="z-0"
+        className="z-0 bg-black"
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution='&copy; OpenStreetMap'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+
+        <MapController coords={targetCoords} />
+        {manualBox && (
+            <Rectangle bounds={manualBox} pathOptions={{ color: '#10b981', weight: 2, fillOpacity: 0.1 }} />
+        )}
 
         <FeatureGroup>
           <EditControl
