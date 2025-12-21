@@ -6,6 +6,7 @@ import { useAuth } from "@clerk/nextjs";
 import { Satellite, Activity, Flame, Trees, Wind, Thermometer } from "lucide-react";
 import ResultModal from "@/components/ResultModal";
 import { runAudit, runGuardian } from "@/lib/api"; 
+import toast from "react-hot-toast";
 
 const MapWithNoSSR = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -26,16 +27,32 @@ export default function AuditPage() {
   const handleAreaSelect = (selected: { lat: number; lng: number }) => {
     setCoords(selected);
     setResult(null);
+
+    toast.dismiss();
+    toast.success("Coordinates Locked", { 
+        icon: '📍', 
+        style: { background: '#333', color: '#fff', fontSize: '12px' },
+        duration: 2000
+    });
   };
 
   const executeCommand = async () => {
-    if (!coords.lat || !coords.lng || !userId) {
-        if(!userId) alert("User authentication missing.");
+    if (!coords.lat || !coords.lng) {
+        toast.error("Please draw an area on the map first.");
+        return;
+    }
+    
+    if (!userId) {
+        if(!userId) toast.error("User authentication missing. Please login.");
         return;
     }
 
     setIsAnalyzing(true);
     setResult(null);
+    const toastId = toast.loading(
+        mode === 'AUDIT' ? "Initializing Satellite Audit..." : "Analyzing Atmospheric Data...", 
+        { style: { background: '#000', color: '#fff', border: '1px solid #333' } }
+    );
 
     try {
       let data;
@@ -45,9 +62,15 @@ export default function AuditPage() {
         data = await runGuardian(coords.lat, coords.lng);
       }
       setResult({ ...data, mode: mode }); 
+      if (data.success) {
+          toast.success("Command Executed Successfully", { id: toastId });
+      } else {
+          toast.error("Analysis Failed", { id: toastId });
+      }
+
     } catch (error) {
       console.error(error);
-      alert("Satellite Connection Failed. Check Backend.");
+      toast.error("Satellite Connection Failed. Check Backend.", { id: toastId });
     } finally {
       setIsAnalyzing(false);
     }
@@ -135,7 +158,7 @@ export default function AuditPage() {
                 ⚠ Draw Area on Map First
             </div>
         )}
-      </div>
+      </div>     
       {result && (
         <ResultModal data={result} onClose={() => setResult(null)} />
       )}

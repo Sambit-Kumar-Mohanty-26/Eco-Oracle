@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Rajdhani, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs"; 
 import { dark } from "@clerk/themes"; 
+import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +42,21 @@ export default function RootLayout({
           fontBody.variable
         )}>
           {children}
+          <Toaster 
+            position="bottom-right"
+            toastOptions={{
+                style: {
+                    background: '#09090b',
+                    border: '1px solid #27272a',
+                    color: '#fff',
+                    fontFamily: 'monospace',
+                    fontSize: '12px'
+                },
+                success: {
+                    iconTheme: { primary: '#10b981', secondary: 'black' }
+                }
+            }}
+          />
         </body>
       </html>
     </ClerkProvider>

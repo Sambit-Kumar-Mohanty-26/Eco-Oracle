@@ -70,3 +70,11 @@ body {
 .animate-border-spin {
   animation: border-spin 4s linear infinite;
 }
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+}
