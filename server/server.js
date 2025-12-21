@@ -5,6 +5,10 @@ const mongoose = require('mongoose');
 const { analyzeForest } = require('./controllers/auditController'); 
 const { predictDisaster } = require('./controllers/guardianController');
 const Audit = require('./models/Audit');
+const Settings = require('./models/Settings');
+const Watchlist = require('./models/Watchlist');
+const crypto = require('crypto');
+const { runBatchScan } = require('./controllers/guardianController');
 require('dotenv').config();
 
 const app = express();
@@ -59,6 +63,63 @@ app.get('/api/activity', async (req, res) => {
         res.json(recentAudits);
     } catch (error) {
         res.status(500).json({ error: "Activity failed" });
+    }
+});
+app.get('/api/settings', async (req, res) => {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ error: "UserID required" });
+
+    try {
+        let settings = await Settings.findOne({ userId });
+        if (!settings) {
+            const newKey = 'sk_live_' + crypto.randomBytes(16).toString('hex');
+            settings = await Settings.create({ userId, apiKey: newKey });
+        }
+        res.json(settings);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/settings', async (req, res) => {
+    const { userId, phoneNumber } = req.body;
+    try {
+        const updated = await Settings.findOneAndUpdate(
+            { userId },
+            { phoneNumber },
+            { new: true, upsert: true }
+        );
+        res.json(updated);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/watchlist', async (req, res) => {
+    const { userId } = req.query;
+    const list = await Watchlist.find({ userId });
+    res.json(list);
+});
+
+app.post('/api/watchlist', async (req, res) => {
+    const { userId, name, lat, lng } = req.body;
+    try {
+        const newItem = await Watchlist.create({ userId, name, lat, lng });
+        res.json(newItem);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/guardian/scan', runBatchScan);
+app.delete('/api/watchlist/:id', async (req, res) => {
+    const { id } = req.params;    
+    const { userId } = req.query;   
+
+    try {
+        const result = await Watchlist.findOneAndDelete({ _id: id, userId: userId });
+        
+        if (!result) {
+            return res.status(404).json({ error: "Item not found or unauthorized" });
+        }
+        
+        res.json({ success: true, message: "Target Removed" });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
 });
 const PORT = process.env.PORT || 5000;
