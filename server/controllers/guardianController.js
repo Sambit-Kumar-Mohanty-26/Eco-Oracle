@@ -13,12 +13,9 @@ const calculateRisk = async (lat, lng) => {
     const weather = await getWeatherData(lat, lng);
     const imagePath = await fetchSatelliteImage(lat, lng, 'NDMI');
     const pythonScript = path.join(__dirname, '../scripts/moisture.py');
-    let pythonCommand;
-    if (process.env.NODE_ENV === 'production') {
-        pythonCommand = 'python3'; 
-    } else {
-        pythonCommand = path.join(__dirname, '../scripts/venv/Scripts/python.exe');
-    }
+    let pythonCommand = process.env.NODE_ENV === 'production' 
+        ? 'python3' 
+        : path.join(__dirname, '../scripts/venv/Scripts/python.exe');
 
     return new Promise((resolve, reject) => {
         const pythonProcess = spawn(pythonCommand, [pythonScript, imagePath]);
@@ -37,7 +34,6 @@ const calculateRisk = async (lat, lng) => {
                 if (weather.temp > 28) riskScore += 20;
                 
                 const riskLevel = riskScore > 60 ? "CRITICAL" : "NORMAL";
-                
                 resolve({ weather, moistureData, riskLevel, riskScore, imagePath });
             } catch (e) { reject(e); }
         });
@@ -45,7 +41,8 @@ const calculateRisk = async (lat, lng) => {
 };
 
 const predictDisaster = async (req, res) => {
-    const { lat, lng, userId, tokenId, contractAddress } = req.body;
+    const { lat, lng, userId, tokenId, contractAddress, currentCarbon } = req.body;
+    
     try {
         const result = await calculateRisk(lat, lng);
         
@@ -53,8 +50,8 @@ const predictDisaster = async (req, res) => {
         let nftUpdated = false;
 
         if (result.riskLevel === "CRITICAL") {
+            console.log("🚨 CRITICAL RISK DETECTED!");
             let targetPhone = process.env.MY_PHONE_NUMBER; 
-            
             if (userId) {
                 const settings = await Settings.findOne({ userId });
                 if (settings && settings.phoneNumber) {
@@ -68,24 +65,38 @@ const predictDisaster = async (req, res) => {
                     from: process.env.TWILIO_PHONE_NUMBER,
                     to: targetPhone
                 });
+                console.log("   ✅ SMS Sent");
                 alertSent = true;
             } catch(e) { console.error("SMS Failed", e.message); }
 
             if (tokenId && contractAddress) {
                 console.log(`   🔄 Attempting to Update Token #${tokenId}...`);
-                const updateRes = await updateNFTStatus(contractAddress, tokenId, "CRITICAL");
+
+                const updateRes = await updateNFTStatus(contractAddress, tokenId, "CRITICAL", currentCarbon || 0);
                 
                 if (updateRes) {
+                    console.log("   ✅ NFT Metadata Updated.");
                     nftUpdated = true;
                 } else {
-                    console.log("   ⚠️ Update failed (Indexing). Minting Fallback...");
-                    await mintNFT(result.imagePath, "CRITICAL FIRE RISK", lat, lng);
+                    console.log("   ⚠️ Update failed (API Indexing Lag).");
+                    console.log("   🚀 FALLBACK: Minting new 'EMERGENCY ALERT' NFT...");
+                    await mintNFT(result.imagePath, "CRITICAL FIRE RISK", lat, lng, 0);
+                    console.log("   ✅ Emergency Blockchain Record Created.");
                     nftUpdated = true;
                 }
             }
         }
         
-        res.json({ success: true, risk_data: result, actions: { sms_sent: alertSent, nft_updated: nftUpdated } });
+        res.json({ 
+            success: true, 
+            risk_data: { 
+                weather: result.weather,
+                dryness: result.moistureData.dryness_score,
+                level: result.riskLevel
+            }, 
+            actions: { sms_sent: alertSent, nft_updated: nftUpdated } 
+        });
+
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: e.message });
@@ -105,8 +116,7 @@ const runBatchScan = async (req, res) => {
         for (const target of targets) {
             console.log(`Scanning ${target.name}...`);
             try {
-                const risk = await calculateRisk(target.lat, target.lng);
-            
+                const risk = await calculateRisk(target.lat, target.lng);                
                 target.lastStatus = risk.riskLevel;
                 target.lastChecked = new Date();
                 await target.save();
