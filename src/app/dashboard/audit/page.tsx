@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { Satellite, Activity, Flame, Trees, Wind, Thermometer, Bot, ScanFace } from "lucide-react";
+import { Satellite, Activity, Flame, Trees, Wind, Thermometer, Bot, TestTube } from "lucide-react";
 import ResultModal from "@/components/ResultModal";
 import { runAudit, runGuardian } from "@/lib/api"; 
 import toast from "react-hot-toast";
@@ -46,7 +46,7 @@ export default function AuditPage() {
     }
   };
 
-  const executeCommand = async () => {
+  const executeCommand = async (isSimulation: boolean = false) => {
     if (!coords.lat || !coords.lng) {
         toast.error("Enter coordinates or draw on map.");
         return;
@@ -59,18 +59,22 @@ export default function AuditPage() {
 
     setIsAnalyzing(true);
     setResult(null);
-    const toastId = toast.loading(
-        mode === 'AUDIT' ? "Initializing AI Audit..." : "Analyzing Atmospheric Data...", 
-        { style: { background: '#000', color: '#fff', border: '1px solid #333' } }
-    );
+    const loadMsg = mode === 'AUDIT' 
+        ? (isSimulation ? "Running Simulation..." : "Verifying & Minting Asset...") 
+        : "Analyzing Atmospheric Data...";
+
+    const toastId = toast.loading(loadMsg, { 
+        style: { background: '#000', color: '#fff', border: '1px solid #333' } 
+    });
 
     try {
       let data;
       if (mode === 'AUDIT') {
-        data = await runAudit(coords.lat, coords.lng, userId);
+        data = await runAudit(coords.lat, coords.lng, userId, isSimulation);
       } else {
         data = await runGuardian(coords.lat, coords.lng);
-      }     
+      }
+      
       setResult({ ...data, mode: mode }); 
       if (data.success) {
           toast.success("Analysis Complete", { id: toastId });
@@ -160,21 +164,33 @@ export default function AuditPage() {
             </div>
         )}
 
-        <button
-          onClick={executeCommand}
-          disabled={!coords.lat || isAnalyzing || !isLoaded}
-          className={`w-full py-4 text-sm font-bold tracking-[0.2em] uppercase transition-all rounded-lg shadow-md text-white
-            ${!coords.lat || isAnalyzing 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : themeBg}
-          `}
-        >
-          {isAnalyzing ? (
-            <span className="flex items-center justify-center gap-2">
-              <Activity className="animate-spin" size={16} /> PROCESSING...
-            </span>
-          ) : mode === 'AUDIT' ? "START AI AUDIT" : "PREDICT FIRE RISK"}
-        </button>
+        <div className="flex flex-col gap-3">
+            <button
+              onClick={() => executeCommand(false)}
+              disabled={!coords.lat || isAnalyzing || !isLoaded}
+              className={`w-full py-3 text-sm font-bold tracking-[0.2em] uppercase transition-all rounded-lg shadow-md text-white
+                ${!coords.lat || isAnalyzing 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : themeBg}
+              `}
+            >
+              {isAnalyzing ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Activity className="animate-spin" size={16} /> PROCESSING...
+                </span>
+              ) : mode === 'AUDIT' ? "VERIFY & MINT ASSET" : "PREDICT FIRE RISK"}
+            </button>
+
+            {mode === 'AUDIT' && !isAnalyzing && (
+                 <button
+                    onClick={() => executeCommand(true)}
+                    disabled={!coords.lat}
+                    className="w-full py-2 text-[10px] font-bold tracking-widest uppercase transition-all rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-emerald-600 flex items-center justify-center gap-2"
+                >
+                    <TestTube size={14} /> RUN SIMULATION (NO MINT)
+                </button>
+            )}
+        </div>
 
         {!coords.lat && (
             <div className="mt-4 text-[10px] text-center text-gray-400 uppercase tracking-wider">
