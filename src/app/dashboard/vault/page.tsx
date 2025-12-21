@@ -54,7 +54,7 @@ export default function AssetVault() {
                 >
                     <div className="h-40 bg-black relative">
                         <img 
-                            src={`${IMAGE_BASE}/${asset.imageName}`} 
+                            src={asset.imageData || `${IMAGE_BASE}/${asset.imageName}`}
                             alt="Map" 
                             className="w-full h-full object-cover opacity-80"
                         />

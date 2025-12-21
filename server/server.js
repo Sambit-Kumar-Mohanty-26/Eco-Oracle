@@ -122,5 +122,16 @@ app.delete('/api/watchlist/:id', async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 });
+app.get('/api/registry', async (req, res) => {
+    try {
+        const publicAudits = await Audit.find({ status: "VERIFIED" })
+            .sort({ timestamp: -1 })
+            .limit(50)
+            .select('-userId');
+        res.json(publicAudits);
+    } catch (error) {
+        res.status(500).json({ error: "Registry fetch failed" });
+    }
+});
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Listening on port ${PORT}`));

@@ -7,6 +7,7 @@ const menuItems = [
   { name: "Mission Control", icon: "📊", path: "/dashboard" },
   { name: "Launch Audit", icon: "🛰️", path: "/dashboard/audit" }, 
   { name: "Asset Vault", icon: "💎", path: "/dashboard/vault" },
+  { name: "Public Registry", icon: "🌍", path: "/registry" },
   { name: "Global Settings", icon: "⚙️", path: "/dashboard/settings" },
 ];
 
@@ -42,7 +43,6 @@ export default function Sidebar() {
                 }`}
             >
               <div className="absolute inset-0 bg-white/5 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-              
               <span className="text-xl filter drop-shadow-lg group-hover:scale-110 transition-transform">
                 {item.icon}
               </span>
