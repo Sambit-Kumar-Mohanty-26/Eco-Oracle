@@ -6,7 +6,7 @@ const AuditSchema = new mongoose.Schema({
   lng: Number,
   biomassScore: Number,
   carbonTonnes: Number,        
-  deforestationRisk: Number,   
+  deforestationRisk: Number,
   imageData: String,           
   contractAddress: String,
   tokenId: String,

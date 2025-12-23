@@ -2,11 +2,12 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const mongoose = require('mongoose');
-const { analyzeForest } = require('./controllers/auditController'); 
+const { analyzeForest } = require('./controllers/auditController');
 const { predictDisaster } = require('./controllers/guardianController');
 const Audit = require('./models/Audit');
 const Settings = require('./models/Settings');
 const Watchlist = require('./models/Watchlist');
+const { syncTokenId } = require('./controllers/syncController');
 const crypto = require('crypto');
 const { runBatchScan } = require('./controllers/guardianController');
 require('dotenv').config();
@@ -133,5 +134,6 @@ app.get('/api/registry', async (req, res) => {
         res.status(500).json({ error: "Registry fetch failed" });
     }
 });
+app.post('/api/sync', syncTokenId);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Listening on port ${PORT}`));

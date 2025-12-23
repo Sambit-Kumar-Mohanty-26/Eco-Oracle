@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { MapContainer, TileLayer, FeatureGroup, useMap, Rectangle } from "react-leaflet";
 import { EditControl } from "react-leaflet-draw";
 import "leaflet/dist/leaflet.css";
@@ -18,18 +18,17 @@ const fixLeafletIcons = () => {
 };
 
 interface MapProps {
-  onAreaSelect: (coords: { lat: number; lng: number }) => void;
-  targetCoords: { lat: number | null; lng: number | null };
+  onAreaSelect: (coords: { lat: number; lng: number; bounds?: number[][] }) => void;
+  targetCoords: { lat: number | null; lng: number | null; bounds?: number[][] | null };
 }
-const MapController = ({ coords }: { coords: { lat: number | null; lng: number | null } }) => {
-  const map = useMap();
 
+const MapController = ({ coords }: { coords: any }) => {
+  const map = useMap();
   useEffect(() => {
     if (coords.lat && coords.lng) {
       map.flyTo([coords.lat, coords.lng], 13, { duration: 1.5 });
     }
   }, [coords, map]);
-
   return null;
 };
 
@@ -43,14 +42,22 @@ const Map = ({ onAreaSelect, targetCoords }: MapProps) => {
     if (layerType === "rectangle" || layerType === "polygon") {
       const bounds = layer.getBounds();
       const center = bounds.getCenter();
-      onAreaSelect({ lat: center.lat, lng: center.lng });
+      
+      const corner1 = bounds.getSouthWest();
+      const corner2 = bounds.getNorthEast();
+      const areaBounds = [
+          [corner1.lat, corner1.lng],
+          [corner2.lat, corner2.lng]
+      ];
+      
+      onAreaSelect({ lat: center.lat, lng: center.lng, bounds: areaBounds });
     }
   };
 
-  const manualBox = targetCoords.lat && targetCoords.lng 
+  const manualBox = targetCoords.lat && targetCoords.lng && !targetCoords.bounds
     ? [
-        [targetCoords.lat - 0.01, targetCoords.lng - 0.01],
-        [targetCoords.lat + 0.01, targetCoords.lng + 0.01]
+        [targetCoords.lat - 0.005, targetCoords.lng - 0.005],
+        [targetCoords.lat + 0.005, targetCoords.lng + 0.005]
       ] as L.LatLngBoundsExpression
     : null;
 
@@ -68,9 +75,10 @@ const Map = ({ onAreaSelect, targetCoords }: MapProps) => {
         />
 
         <MapController coords={targetCoords} />
-        {manualBox && (
-            <Rectangle bounds={manualBox} pathOptions={{ color: '#10b981', weight: 2, fillOpacity: 0.1 }} />
-        )}
+        
+        {manualBox && <Rectangle bounds={manualBox} pathOptions={{ color: '#10b981', weight: 2, fillOpacity: 0.1 }} />}
+        
+        {targetCoords.bounds && <Rectangle bounds={targetCoords.bounds as L.LatLngBoundsExpression} pathOptions={{ color: '#10b981', weight: 2, fillOpacity: 0.1 }} />}
 
         <FeatureGroup>
           <EditControl

@@ -17,12 +17,18 @@ export default function AuditPage() {
   const { userId, isLoaded } = useAuth(); 
   const [inputLat, setInputLat] = useState("");
   const [inputLng, setInputLng] = useState("");
-  const [coords, setCoords] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
+  
+  const [coords, setCoords] = useState<{ lat: number | null; lng: number | null; bounds?: number[][] | null }>({ 
+      lat: null, 
+      lng: null, 
+      bounds: null 
+  });
+  
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [mode, setMode] = useState<'AUDIT' | 'GUARDIAN'>('AUDIT');
 
-  const handleAreaSelect = (selected: { lat: number; lng: number }) => {
+  const handleAreaSelect = (selected: { lat: number; lng: number; bounds?: number[][] }) => {
     setCoords(selected);
     setInputLat(selected.lat.toFixed(4));
     setInputLng(selected.lng.toFixed(4));  
@@ -42,7 +48,7 @@ export default function AuditPage() {
     const g = parseFloat(type === 'lng' ? value : inputLng);
 
     if (!isNaN(l) && !isNaN(g)) {
-        setCoords({ lat: l, lng: g });
+        setCoords({ lat: l, lng: g, bounds: null });
     }
   };
 
@@ -70,11 +76,10 @@ export default function AuditPage() {
     try {
       let data;
       if (mode === 'AUDIT') {
-        data = await runAudit(coords.lat, coords.lng, userId, isSimulation);
+        data = await runAudit(coords.lat, coords.lng, userId, isSimulation, coords.bounds || undefined);
       } else {
         data = await runGuardian(coords.lat, coords.lng);
-      }
-      
+      }     
       setResult({ ...data, mode: mode }); 
       if (data.success) {
           toast.success("Analysis Complete", { id: toastId });

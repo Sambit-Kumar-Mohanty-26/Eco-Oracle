@@ -26,21 +26,21 @@ async function getSentinelToken() {
 function getDateRange(isHistorical = false) {
     const end = new Date();
     if (isHistorical) end.setFullYear(end.getFullYear() - 1);
-    
     const start = new Date(end);
     start.setDate(end.getDate() - 30);
-    
-    return {
-        from: start.toISOString(),
-        to: end.toISOString()
-    };
+    return { from: start.toISOString(), to: end.toISOString() };
 }
 
-async function fetchSatelliteImage(lat, lng, layerType = 'NDVI', isHistorical = false) {
+async function fetchSatelliteImage(lat, lng, layerType = 'NDVI', isHistorical = false, customBbox = null) {
   const token = await getSentinelToken();
-  const offset = 0.01; 
-  const bbox = [lng - offset, lat - offset, lng + offset, lat + offset];
   const timeRange = getDateRange(isHistorical);
+  let bbox;
+  if (customBbox) {
+      bbox = customBbox;
+  } else {
+      const offset = 0.01;
+      bbox = [lng - offset, lat - offset, lng + offset, lat + offset];
+  }
 
   const scriptNDVI = `
     //VERSION=3
@@ -50,7 +50,6 @@ async function fetchSatelliteImage(lat, lng, layerType = 'NDVI', isHistorical = 
       return [1 - ndvi, ndvi, 0]; 
     }
   `;
-
   const scriptNDMI = `
     //VERSION=3
     function setup() { return { input: ["B8A", "B11"], output: { bands: 3 } }; }
@@ -61,12 +60,11 @@ async function fetchSatelliteImage(lat, lng, layerType = 'NDVI', isHistorical = 
       return [1, 0, 0];
     }
   `;
-
   const scriptTrueColor = `
     //VERSION=3
     function setup() { return { input: ["B04", "B03", "B02"], output: { bands: 3 } }; }
     function evaluatePixel(sample) {
-      return [sample.B04 * 2.5, sample.B03 * 2.5, sample.B02 * 2.5]; 
+      return [sample.B04 * 4.5, sample.B03 * 4.5, sample.B02 * 4.5]; 
     }
   `;
 
@@ -103,7 +101,6 @@ async function fetchSatelliteImage(lat, lng, layerType = 'NDVI', isHistorical = 
 
     const tempDir = path.join(__dirname, '../temp');
     if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
-    
     const filePath = path.join(tempDir, fileName);
     fs.writeFileSync(filePath, response.data);
     return filePath;
@@ -112,15 +109,15 @@ async function fetchSatelliteImage(lat, lng, layerType = 'NDVI', isHistorical = 
   }
 }
 
-async function fetchFullEvidence(lat, lng) {
-    console.log("   🛰️ Fetching Scientific Data (NDVI)...");
-    const ndviCurrent = await fetchSatelliteImage(lat, lng, 'NDVI', false);
-    const ndviHistorical = await fetchSatelliteImage(lat, lng, 'NDVI', true);
+async function fetchFullEvidence(lat, lng, customBbox = null) {
+    console.log("   🛰️ Fetching Scientific Data...");
+    const ndviCurrent = await fetchSatelliteImage(lat, lng, 'NDVI', false, customBbox);
+    const ndviHistorical = await fetchSatelliteImage(lat, lng, 'NDVI', true, customBbox);
 
-    console.log("   📸 Fetching Visual Evidence (True Color)...");
+    console.log("   📸 Fetching Visual Evidence...");
     await Promise.all([
-        fetchSatelliteImage(lat, lng, 'TRUE_COLOR', false),
-        fetchSatelliteImage(lat, lng, 'TRUE_COLOR', true) 
+        fetchSatelliteImage(lat, lng, 'TRUE_COLOR', false, customBbox),
+        fetchSatelliteImage(lat, lng, 'TRUE_COLOR', true, customBbox)
     ]);
 
     return { current: ndviCurrent, historical: ndviHistorical };

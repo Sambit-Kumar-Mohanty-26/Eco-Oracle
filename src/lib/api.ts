@@ -4,8 +4,19 @@ export const runAudit = async (
   lat: number, 
   lng: number, 
   userId: string, 
-  isSimulation: boolean = false
+  isSimulation: boolean = false,
+  bounds?: number[][]
 ) => {
+  
+  let bbox = null;
+  if (bounds) {
+      const minLat = Math.min(bounds[0][0], bounds[1][0]);
+      const maxLat = Math.max(bounds[0][0], bounds[1][0]);
+      const minLng = Math.min(bounds[0][1], bounds[1][1]);
+      const maxLng = Math.max(bounds[0][1], bounds[1][1]);
+      bbox = [minLng, minLat, maxLng, maxLat];
+  }
+
   const res = await fetch(`${API_URL}/analyze`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -13,7 +24,8 @@ export const runAudit = async (
         lat, 
         lng, 
         userId,
-        mode: isSimulation ? 'SIMULATION' : 'MINT'
+        mode: isSimulation ? 'SIMULATION' : 'MINT',
+        bbox: bbox 
     }),
   });
   return res.json();

@@ -6,7 +6,7 @@ const { mintNFT, updateNFTStatus } = require('../services/verbwire');
 const Audit = require('../models/Audit');
 
 const analyzeForest = async (req, res) => {
-  const { lat, lng, userId, mode, tokenId, contractAddress } = req.body; 
+  const { lat, lng, userId, mode, tokenId, contractAddress, bbox } = req.body; 
 
   if (!lat || !lng || !userId) {
     return res.status(400).json({ error: "Missing data" });
@@ -15,7 +15,8 @@ const analyzeForest = async (req, res) => {
   try {
     const isSim = mode === 'SIMULATION';
     console.log(`📡 Initializing Audit...`);
-    const images = await fetchFullEvidence(lat, lng);
+    
+    const images = await fetchFullEvidence(lat, lng, bbox);
 
     const pythonScript = path.join(__dirname, '../scripts/analyze_advanced.py'); 
     let pythonCommand = process.env.NODE_ENV === 'production' ? 'python3' : path.join(__dirname, '../scripts/venv/Scripts/python.exe');
