@@ -7,6 +7,14 @@ const AuditSchema = new mongoose.Schema({
   biomassScore: Number,
   carbonTonnes: Number,        
   deforestationRisk: Number,
+  encroachmentRisk: Number,
+  detectedFeatures: { type: String, default: "None" }, 
+
+  composition: {
+      dense: Number,
+      sparse: Number,
+      barren: Number
+  },
   imageData: String,           
   contractAddress: String,
   tokenId: String,
