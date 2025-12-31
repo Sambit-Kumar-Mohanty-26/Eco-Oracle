@@ -1,2 +1,5 @@
-opencv-python-headless
 numpy
+opencv-python-headless
+requests
+Pillow
+scikit-image
