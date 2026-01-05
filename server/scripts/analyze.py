@@ -21,7 +21,7 @@ def analyze_image(image_path):
     green_pixels = cv2.countNonZero(mask)
     score = (green_pixels / total_pixels) * 100
     status = "REJECTED"
-    if score > 20:
+    if score > 65:
         status = "VERIFIED"
     result = {
         "biomass_score": round(score, 2),

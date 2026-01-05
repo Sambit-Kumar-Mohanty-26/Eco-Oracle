@@ -182,7 +182,7 @@ def analyze_temporal(current_path, historical_path, high_res_path):
     elif loss_percentage > 10.0:
         probable_cause = "Deforestation"
         status = "REJECTED_DEFORESTATION"
-    elif precision_score < 20: 
+    elif precision_score < 65: 
         status = "REJECTED_LOW_BIOMASS"
 
     result = {
